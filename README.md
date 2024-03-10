@@ -21,3 +21,15 @@
 
 ▶️ Inicia una consola para enviar mensajes a un topic específico
 .\bin\windows\kafka-console-producer.bat --broker-list {host}:9092 --topic {topic-name}
+
+-- Los comandos del docker compose -- 
+
+Para entrar dentro del broker y crear tanto el producer y el consumer
+
+docker exec -it kafka bash
+Con ese docker compose creo un broker.
+La manera de crear un producer con el topic seria este comando: 
+kafka-console-producer --bootstrap-server kafka-broker-1:9092 --create --topic testing
+
+Para leer en forma de consumer
+kafka-console-consumer --bootstrap-server kafka-broker-1:9092 --topic testing --from-beginning
