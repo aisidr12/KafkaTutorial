@@ -2,11 +2,13 @@ package com.kafka.provider.controller;
 
 import com.kafka.provider.dto.ProducerMessageDTO;
 import com.kafka.provider.dto.TopicDTO;
-import com.kafka.provider.service.KafkaAdminService;
+import com.kafka.provider.service.TopicAdminService;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.support.SendResult;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,30 +21,21 @@ import org.springframework.web.bind.annotation.RestController;
 public class ProducerController {
 
   private final KafkaTemplate<String, String> kafkaTemplate;
-  private final KafkaAdminService kafkaAdminService;
+  private final TopicAdminService topicAdminService;
 
-  public ProducerController(KafkaTemplate kafkaTemplate, KafkaAdminService kafkaAdminService) {
+  public ProducerController(KafkaTemplate kafkaTemplate, TopicAdminService topicAdminService) {
     this.kafkaTemplate = kafkaTemplate;
-    this.kafkaAdminService = kafkaAdminService;
+    this.topicAdminService = topicAdminService;
   }
 
-  @PostMapping("/create")
-  public ResponseEntity<?> sendMessage(@RequestBody ProducerMessageDTO producerMessageDTO) {
-    return ResponseEntity.ok(kafkaTemplate.send(producerMessageDTO.topicName(),
-        producerMessageDTO.message()));
+  @PostMapping("/send")
+  public ResponseEntity<?> sendMessageToProducer(@RequestBody ProducerMessageDTO producerMessageDTO) {
+    CompletableFuture<SendResult<String, String>> message = kafkaTemplate.send(
+        producerMessageDTO.topicName(), producerMessageDTO.message());
+
+    message.thenAccept(t->t.getRecordMetadata());
+    System.out.println(message);
+
+    return ResponseEntity.ok("Message Enviado");
   }
-
-  @GetMapping("/list")
-  public ResponseEntity<List<String>> getMessagesInTopic()
-      throws ExecutionException, InterruptedException {
-    return ResponseEntity.ok(kafkaAdminService.retrieveAllTopics());
-  }
-
-  @DeleteMapping
-  public ResponseEntity<?> deleteMessagesInTopic(@RequestBody TopicDTO topic) {
-    kafkaAdminService.deleteTopic(topic.nameTopic());
-    return ResponseEntity.ok("Delete topic");
-  }
-
-
 }
